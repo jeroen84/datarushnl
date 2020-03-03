@@ -21,11 +21,12 @@ jobs:
 
       - name: Build
         run: hugo --minify
-        
+
       - name: FTP-Deploy-Action
-        uses: SamKirkland/FTP-Deploy-Action@3.0.0
+        uses: sebastianpopp/ftp-action@releases/v1
         with:
-          ftp-server: ${{ secrets.FTP_ADDRESS }}
-          ftp-username: ${{ secrets.FTP_USER }}
-          ftp-password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: public/
+          host: ${{ secrets.FTP_ADDRESS }}
+          user: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          localDir: "public"
+          remoteDir: "HOME"
