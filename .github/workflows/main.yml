@@ -22,11 +22,11 @@ jobs:
       - name: Build
         run: hugo --minify
 
-      - name: FTP-Deploy-Action
-        uses: sebastianpopp/ftp-action@releases/v1
+      - name: SSH deploy 
+        uses: garygrossgarten/github-action-scp@release
         with:
-          host: ${{ secrets.FTP_ADDRESS }}
-          user: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          localDir: "public"
-          remoteDir: "HOME"
+          local: ./public
+          remote: HTML
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          privateKey: ${{ secrets.DEPLOY_KEY }}
