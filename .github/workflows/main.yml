@@ -25,7 +25,7 @@ jobs:
       - name: SSH deploy 
         uses: garygrossgarten/github-action-scp@release
         with:
-          local: ./public
+          local: public
           remote: HTML
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
