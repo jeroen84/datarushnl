@@ -75,11 +75,16 @@ googleAnalytics = "UA-159597246-1"
 [menu]
 
   [[menu.main]]
+    name = "Pensioendashboard"
+    url = "https://pensioendashboard.datarush.nl"
+    weight = 10 
+
+  [[menu.main]]
     name = "Posts"
     url = "posts/"
-    weight = 10
+    weight = 20
 
   [[menu.main]]
     name = "About"
     url = "about-datarush/"
-    weight = 20
+    weight = 30
