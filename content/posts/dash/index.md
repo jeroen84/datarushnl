@@ -23,7 +23,7 @@ Dashboards are great instruments tools to get a quick understanding of a certain
 
 In this article, I present a solution for the second bullet point , by building a fairly basic dashboard using the open-source solution [Dash by Plot.ly](https://plot.ly/dash/). Dash offers beautiful interactive and scalable dashboards. The dashboard discussed here presents two key risk and performance drivers for a asset manager: the global equity market and the 30 year EUR interest rate. Two graphs are presented: one which shows the prices of the two drivers during 2019, and the second showing the 30 days rolling window correlation.
 
-For those only interested in the end result, you can find a demo of the dashboard here.
+For those only interested in the end result, you can find a demo of the dashboard [here](https://dashboards.datarush.nl/demo1).
 
 ## How to build
 
