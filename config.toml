@@ -44,9 +44,9 @@ title = "e-mail"
 url = "mailto:jeroen@datarush.nl"
 
 [[params.socialIcons]]
-icon = "fa-skype"
-title = "skype"
-url = "skype:+31614862400?call"
+icon = "fa-telegram"
+title = "telegram"
+url = "https://t.me/jeroenvde"
 
 ## Menu items
 

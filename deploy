@@ -3,6 +3,6 @@ USER=datarushnl
 HOST=sftp://ftp.oni.nl           
 DIR=HTML   # the directory where your web site files should go
 
-hugo && lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate no;mirror -R public ${DIR};quit" -u ${USER} ${HOST} 
+rm -rf public && hugo && lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate no;mirror -c -R public ${DIR};quit" -u ${USER} ${HOST} 
 
 exit 0
