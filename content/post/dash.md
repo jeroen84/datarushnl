@@ -1,19 +1,11 @@
----
-title: "Dash: a dashboard in a few steps using Python"
-date: 2020-01-24
-draft: false
-toc: false
-images:
-tags: 
-  - dash
-  - etl
-  - assetmanagement
-  - python
-  - bi
-  - businessintelligence
----
-
-Find the source code of the dashboard on my Github page
++++
+date = 2020-01-24
+author = "Jeroen van de Erve"
+title = "Dash: a dashboard in a few steps using Python"
+description = "Create a simple dashboard using Python and Dash"
+tags = ["dash", "python", "plotly", "automation", "ETL"]
+# feature = "<no value>"
++++
 
 Dashboards are great instruments tools to get a quick understanding of a certain subject, for instance financial markets. Building and maintaining **effective** dashboards can be challenging:
 
@@ -31,16 +23,16 @@ First, a Python development environment needs to be installed and available. The
 
 Next, in order to use Dash, several packages need to be installed. Within the virtual environment of your choice, please [install](https://packaging.python.org/tutorials/installing-packages/) the following packages:
 
-```
+{{< highlight python >}}
 pip install dash==1.8.0
 pip install plotly-express==0.4.1
-```
+{{< /highlight >}}
 
 For this demo, I prepared a dataset containing the price of a global equity index and the 30-year EUR interest swap rate (EUSA30). Please download the dataset here and place the file in the same folder as your upcoming Python script.
 
 After successful installation of the aforementioned packages, please go to your [IDE](https://en.wikipedia.org/wiki/Integrated_development_environment) of choice, for instance [Visual Studio Code](https://code.visualstudio.com/docs/languages/python). Create a new file, called app.py and enter the following code:
 
-```
+{{< highlight python >}}
 import dash
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
@@ -129,11 +121,11 @@ dash_app.layout = dbc.Container(
 if __name__ == '__main__':
     dash_app.run_server(host="0.0.0.0",
                         debug=True)
-```
+{{< /highlight >}}
 
 Run the code and notice that a web server is built at the address http://0.0.0.0:8050. The 0.0.0.0 address, or [localhost](https://en.wikipedia.org/wiki/Localhost), refers to your computer, meaning that the dashboard is only accessible from your computer. For demo purposes this is sufficient.
 
-![alt text](dash1.png)
+![alt text](/images/dash1.png)
 
 Open http://0.0.0.0:8050 in your browser and see, you have just built a dashboard using only a few steps and fairly limited amount of programming code! Hope you experienced an easy drive! Please find the code of the demo at my [Github](https://github.com/jeroen84/datarush-demo1) repository here.
 Follow up

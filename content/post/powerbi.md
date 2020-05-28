@@ -1,17 +1,10 @@
----
-title: "Power BI: keeping your dashboards up-to-date"
-date: 2020-03-02
-draft: false
-toc: false
-images:
-tags: 
-  - powerbi
-  - dashboards
-  - businessintelligence
-  - automation
-  - cloud
-  - microsoft
----
++++
+date = 2020-03-02
+author = "Jeroen van de Erve"
+title = "Power BI: keeping your dashboards up-to-date"
+description = "Automate data retrieval of your Power BI dashboards in just a few steps explained"
+tags = ["powerbi", "automation", "dashboard"]
++++
 
 Do you update your Power BI dashboard by clicking on the Refresh button? And, subsequently, share the updated dashboard by e-mail or other communication methods with your stakeholders? If so, keep on reading!
 
@@ -28,7 +21,7 @@ As a starting point, I use a demo dashboard which can be downloaded [here](https
 First, we need to save the dashboard in the Power BI cloud environment. Do this by clicking on the Publish button in your Power BI desktop, and select the designated workspace. Please note that a Power BI Pro license is [required](https://docs.microsoft.com/en-us/power-bi/service-admin-purchasing-power-bi-pro), although a 60-day free trial period can be obtained for you to test first.
 No alt text provided for this image
 
-![alt text](powerbi-save2cloud.gif)
+![alt text](/images/powerbi-save2cloud.gif)
 
 ## 3. Install On-Premises Gateway
 
@@ -38,14 +31,14 @@ Next, in order to make the automated refresh work, we need to connect the Power 
 
 Well, if you have come to this part of the blog, then you have almost made it! What we need to do now, is connect the Excel data source to the Power BI cloud environment. To do this, go to the Settings page in the cloud environment of Power BI, then click on 'Datasets'. There you see an overview of datasets currently in your cloud environment. Next, select the dataset of your choice, and then click on the arrow of 'Gateway connection'. There you will see the gateway that you have just installed. Then, click on the right arrow in the 'Actions' of your gateway and there you see the path to the Excel sheet. Click on 'Add to gateway', and insert your credentials. After that, the data source (the Excel sheet) is now added to your gateway. The final step is to map the data source of your dataset to the gateway. Click on 'Apply' to finalize the mapping.
 
-![alt text](powerbi-addgateway.gif)
+![alt text](/images/powerbi-addgateway.gif)
 
 ## 5. Schedule refreshes
 
 The final step is then to schedule the refreshes. In the 'Datasets' window, scroll to 'Scheduled refreshes', click on the arrow, set the 'Keep your data up to date' to 'On' and set the desired frequency and time. In the example below, I have set the refresh on a daily basis at 6PM CET. Also, I have entered my e-mail address to get notified when a refresh is failed.
 No alt text provided for this image
 
-![alt text](powerbi-schedule.gif)
+![alt text](/images/powerbi-schedule.gif)
 
 ## 6. Conclusion
 
