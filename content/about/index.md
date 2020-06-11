@@ -30,6 +30,7 @@ Next to the hereinafter referred to technical skills, I have strong knowledge of
 * **Programming languages**
   * Python
   * Visual Basic
+  * Scripting languages like Powershell, Bash
 * **Database systems, working with various types of databases, including**
   *  T-SQL
   *  MySQL
@@ -40,3 +41,4 @@ Next to the hereinafter referred to technical skills, I have strong knowledge of
 * **Software implementation**
   * Docker
   * Git version control
+  * CI/CD
