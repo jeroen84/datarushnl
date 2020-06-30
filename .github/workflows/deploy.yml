@@ -1,0 +1,29 @@
+name: Website upload
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+ 
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: latest
+
+      - name: Build site
+        run: hugo
+  
+      - name: Install lftp
+        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install lftp
+  
+      - name: Upload to ftp server
+        run: lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate no;mirror -c -R public HTML;quit" -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}; exit
