@@ -1,0 +1,14 @@
+#!/bin/sh
+
+echo "What is the FTP server address? (sftp://....)"
+read HOST
+
+echo "What is the user name for the FTP host?"
+read USER
+
+echo "What is the destination folder?"
+read DIR
+
+rm -rf public && hugo && lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate no;mirror -c -R public ${DIR};quit" -u ${USER} ${HOST} 
+
+exit 0
