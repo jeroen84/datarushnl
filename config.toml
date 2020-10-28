@@ -5,6 +5,7 @@ title = ""
 theme = "anatole"
 summarylength = 20
 enableEmoji = true
+enableRobotsTXT = true
 
 # Enable Disqus
 #disqusShortname = ""
@@ -29,22 +30,22 @@ use = "katex"  # options: "katex", "mathjax". default is "katex".
 
 ## Social links
 [[params.socialIcons]]
-icon = "fa-linkedin"
+icon = "fab fa-linkedin"
 title = "Linkedin"
 url = "https://www.linkedin.com/in/jeroen-van-de-erve/"
 
 [[params.socialIcons]]
-icon = "fa-github"
+icon = "fab fa-github"
 title = "GitHub"
 url = "https://github.com/jeroen84/"
 
 [[params.socialIcons]]
-icon = "fa-envelope"
+icon = "fas fa-envelope"
 title = "e-mail"
 url = "mailto:jeroen@datarush.nl"
 
 [[params.socialIcons]]
-icon = "fa-telegram"
+icon = "fab fa-telegram"
 title = "telegram"
 url = "https://t.me/jeroenvde"
 
