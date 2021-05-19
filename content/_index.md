@@ -5,4 +5,3 @@ description = "Datarush provides solutions in the field of data analyses, data s
 summary = "Experienced professional focused on data optimisation"
 +++
 
-Hallo!
