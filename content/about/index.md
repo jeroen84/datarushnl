@@ -5,10 +5,15 @@ draft: false
 ---
 
 
-
 ## PERSONAL
 
 Working with data and the latest technologies are a passion for me. I was very interested in computers in my early days, and learned myself to program at the age of 12 in various programming languages (Visual Basic, Pascal, Java). At high school I also developed interest in economics. These two interests – economics and computer technologies -  strongly reflect my professional career. I get very excited when I am able to solve business challenges using the latest technologies available. Thereby I have the knowledge of and experience within the financial sector, as well as the technical skills to implement data driven projects related to business intelligence and data science.
+
+---
+
+## PROFESSIONAL CAREER
+
+With over a decade of professional experience in the institutional investment sector, including [Mn](https://mn.nl), [PGGM](https://pggm.nl) and [Nationale-Nederlanden](https://nn.nl). The roles involve various investment risk management and portfolio management positions.
 
 ---
 
