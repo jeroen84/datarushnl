@@ -1,4 +1,4 @@
-baseURL = "/"
+baseURL = "https://www.datarush.nl"
 languageCode = "en"
 DefaultContentLanguage = "en"
 title = ""
@@ -6,6 +6,7 @@ theme = "anatole"
 summarylength = 20
 enableEmoji = true
 enableRobotsTXT = true
+canonifyURLs = true
 
 # Enable Disqus
 #disqusShortname = ""

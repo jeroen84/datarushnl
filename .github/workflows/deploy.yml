@@ -26,4 +26,4 @@ jobs:
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install lftp
   
       - name: Upload to ftp server
-        run: lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate no;mirror -c -R public HTML;quit" -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}; exit
+        run: lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate no;mirror -c -R -X *.do-not-remove public HTML;quit" -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}; exit

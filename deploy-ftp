@@ -9,6 +9,6 @@ read USER
 echo "What is the destination folder?"
 read DIR
 
-rm -rf public && hugo && lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate no;mirror -c -R public ${DIR};quit" -u ${USER} ${HOST} 
+rm -rf public && hugo && lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate no;mirror -c -R -v -X *.do-not-remove public ${DIR};quit" -u ${USER} ${HOST} 
 
 exit 0
