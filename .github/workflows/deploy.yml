@@ -10,10 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
- 
+
+      - name: Set up Homebrew
+        id: setup-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
         with:
@@ -21,10 +25,7 @@ jobs:
 
       - name: Build site
         run: hugo
-      
-      - name: Homebrew to PATH
-        run: eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-  
+
       - name: Install lftp
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install lftp
   
