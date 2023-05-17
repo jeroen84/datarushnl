@@ -21,6 +21,9 @@ jobs:
 
       - name: Build site
         run: hugo
+      
+      - name: Homebrew to PATH
+        run: eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
   
       - name: Install lftp
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install lftp
