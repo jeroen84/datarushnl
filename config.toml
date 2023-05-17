@@ -20,7 +20,7 @@ author = "Datarush"
 description = "Provide data driven solutions for the financial sector. Make data work for you! #data #datascience #python #productowner"
 profilePicture = "images/avatar.png"
 keywords = ["asset management", "data analytics", "data science", "python", "powerbi", "dashboard", "pensioenfondsen", "dekkingsgraad"]
-favicon = "favicons/"
+#favicon = "favicons/"
 customCss = []
 mainSections = ["post"]
 
