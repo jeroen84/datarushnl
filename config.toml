@@ -17,9 +17,9 @@ canonifyURLs = true
 [params]
 title = "Datarush"
 author = "Datarush"
-description = "Provide data driven solutions for the financial sector. Make data work for you! #data #datascience #python #productowner"
+description = "Provide data driven solutions for the financial sector. Make data work for you!"
 profilePicture = "images/avatar.png"
-keywords = ["asset management", "data analytics", "data science", "python", "powerbi", "dashboard", "pensioenfondsen", "dekkingsgraad"]
+keywords = ["investment management", "software development", "business intelligence", "data science", "python", "powerbi"]
 #favicon = "favicons/"
 customCss = []
 mainSections = ["post"]
