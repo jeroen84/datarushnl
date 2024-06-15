@@ -11,9 +11,6 @@ canonifyURLs = true
 # Enable Disqus
 #disqusShortname = ""
 
-# Google Analytics
-#googleAnalytics = "UA-159597246-1"
-
 [params]
 title = "Datarush"
 author = "Datarush"
