@@ -4,16 +4,15 @@ author = "Jeroen van de Erve"
 title = "Dash: a dashboard in a few steps using Python"
 description = "Create a simple dashboard using Python and Dash"
 tags = ["dash", "python", "plotly", "automation", "ETL"]
-# feature = "<no value>"
 +++
 
-Dashboards are great instruments tools to get a quick understanding of a certain subject, for instance financial markets. Building and maintaining **effective** dashboards can be challenging:
+Dashboards are great instruments to get a quick understanding of a certain subject, for instance financial markets. Building and maintaining **effective** dashboards can be challenging:
 
 1. First, there is the process of gathering the data sources and transforming in an appropriate format (the so-called Extract-Transform-Load, or [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load));
 2. Secondly there is the art of constructing the dashboard in such a way that it visually informs the end-user most effectively, considering mobile devices as well;
-3. And finally, one needs to consider how to keep to dashboard up-to-date, using minimal, if none, manual interaction (straight through process). In my opinion, there is nothing more frustrating than updating the underlying dataset manually each time before sharing the updated dashboard to the end-user.
+3. And finally, one needs to consider how to keep the dashboard up-to-date, using minimal, if none, manual interaction (straight through process). In my opinion, there is nothing more frustrating than updating the underlying dataset manually each time before sharing the updated dashboard to the end-user.
 
-In this article, I present a solution for the second bullet point , by building a fairly basic dashboard using the open-source solution [Dash by Plot.ly](https://plot.ly/dash/). Dash offers beautiful interactive and scalable dashboards. The dashboard discussed here presents two key risk and performance drivers for a asset manager: the global equity market and the 30 year EUR interest rate. Two graphs are presented: one which shows the prices of the two drivers during 2019, and the second showing the 30 days rolling window correlation.
+In this article, I present a solution for the second bullet point, by building a fairly basic dashboard using the open-source solution [Dash by Plot.ly](https://plot.ly/dash/). Dash offers beautiful interactive and scalable dashboards. The dashboard discussed here presents two key risk and performance drivers for an asset manager: the global equity market and the 30 year EUR interest rate. Two graphs are presented: one which shows the prices of the two drivers during 2019, and the second showing the 30 days rolling window correlation.
 
 For those only interested in the end result, you can find a demo of the dashboard [here](https://dashboards.datarush.nl/demo1).
 
@@ -128,6 +127,7 @@ Run the code and notice that a web server is built at the address http://0.0.0.0
 ![alt text](/images/dash1.png)
 
 Open http://0.0.0.0:8050 in your browser and see, you have just built a dashboard using only a few steps and fairly limited amount of programming code! Hope you experienced an easy drive! Please find the code of the demo at my [Github](https://github.com/jeroen84/datarush-demo1) repository here.
-Follow up
+
+## Follow up
 
 In later blogs, I will highlight the other two bullet points at the beginning of the article: ETL and straight through processes.

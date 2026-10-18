@@ -5,7 +5,6 @@ author = "Jeroen van de Erve"
 title = "Pension Dashboard"
 description = "View the current situation of the pension funds ABP, PFZW, PMT, and BPF Bouw in a clear dashboard"
 tags = ["pension funds", "funding ratio", "abp", "pfzw", "python", "data science"]
-# feature = "<no value>"
 +++
 
 The [pension dashboard](https://dashboards.datarush.nl/pensioendashboard) provides an overview of the current financial status of the pension funds ABP, PFZW, PMT, and BPF Bouw. This dashboard uses public data sources and open-source software. Various techniques are applied for retrieving and processing the data, including web scraping and APIs. Machine learning techniques are used for forecasting the funding ratios. Software such as Python, Azure Web Apps, Plotly, and Dash are used, all in a fully automated environment. The source code is available on [Github](https://github.com/jeroen84/datarush-pensioendashboard)!
