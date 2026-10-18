@@ -1,0 +1,69 @@
+name: Preview Deployment
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - '**'
+      - '!master'
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - name: Set up Homebrew
+        id: setup-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install Dart Sass
+        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install sass/sass/sass
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3.2.1
+        with:
+          hugo-version: '0.168.0'
+          extended: true
+
+      - name: Build site
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            hugo --baseURL "https://www.datarush.nl/preview/pr-${{ github.event.pull_request.number }}/"
+          else
+            hugo --baseURL "https://www.datarush.nl/preview/${{ github.ref_name }}/"
+          fi
+
+      - name: Install lftp
+        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install lftp
+
+      - name: Upload preview to FTP
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_NUMBER=${{ github.event.pull_request.number }}
+            lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate yes;mirror -c -R -v -X *.do-not-remove --ignore-time public preview/pr-${PR_NUMBER};quit" -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}; exit
+          else
+            BRANCH_NAME=${{ github.ref_name }}
+            SANITIZED_BRANCH=$(echo "$BRANCH_NAME" | tr '/' '-')
+            lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate yes;mirror -c -R -v -X *.do-not-remove --ignore-time public preview/${SANITIZED_BRANCH};quit" -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}; exit
+          fi
+
+      - name: Comment preview URL
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const prNumber = context.payload.pull_request?.number;
+            const previewUrl = `https://www.datarush.nl/preview/pr-${prNumber}/`;
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Preview ready: [${previewUrl}](${previewUrl})`
+            })

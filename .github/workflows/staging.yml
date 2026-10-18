@@ -1,0 +1,37 @@
+name: Staging Deployment
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - name: Set up Homebrew
+        id: setup-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install Dart Sass
+        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install sass/sass/sass
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3.2.1
+        with:
+          hugo-version: '0.168.0'
+          extended: true
+
+      - name: Build site
+        run: hugo --baseURL "https://www.datarush.nl/staging/"
+
+      - name: Install lftp
+        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install lftp
+
+      - name: Upload to staging on FTP
+        run: lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate yes;mirror -c -R -v -X *.do-not-remove --ignore-time public staging;quit" -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}; exit

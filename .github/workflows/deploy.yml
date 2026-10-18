@@ -1,16 +1,27 @@
-name: Website upload
+name: Production Deployment
 
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to confirm production deployment'
+        required: true
+        default: 'deploy'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Validate confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "deploy" ]; then
+            echo "::error::Deployment not confirmed. Type 'deploy' in the confirm input."
+            exit 1
+          fi
+          echo "Production deployment confirmed."
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: true
 
@@ -22,16 +33,16 @@ jobs:
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install sass/sass/sass
 
       - name: Setup Hugo
-        uses: peaceiris/actions-hugo@v3
+        uses: peaceiris/actions-hugo@v3.2.1
         with:
-          hugo-version: '0.155.3'
+          hugo-version: '0.168.0'
           extended: true
 
       - name: Build site
-        run: hugo
+        run: hugo --baseURL "https://www.datarush.nl/"
 
       - name: Install lftp
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install lftp
   
       - name: Upload to ftp server
-        run: lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate no;mirror -c -R -X *.do-not-remove public HTML;quit" -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}; exit
+        run: lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate yes;mirror -c -R -X *.do-not-remove public HTML;quit" -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}; exit
