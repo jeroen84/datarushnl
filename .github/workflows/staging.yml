@@ -19,7 +19,7 @@ jobs:
         uses: Homebrew/actions/setup-homebrew@main
 
       - name: Install Dart Sass
-        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install sass/sass/sass
+        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install dart-sass
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v3.2.1
