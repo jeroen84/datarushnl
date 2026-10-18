@@ -29,7 +29,7 @@ jobs:
 
       - name: Set up Homebrew
         id: setup-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+        uses: Homebrew/actions/setup-homebrew@main
 
       - name: Install Dart Sass
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install sass/sass/sass
@@ -458,7 +458,7 @@ jobs:
 
       - name: Set up Homebrew
         id: setup-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+        uses: Homebrew/actions/setup-homebrew@main
 
       - name: Install Dart Sass
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install sass/sass/sass
@@ -548,7 +548,7 @@ jobs:
 
       - name: Set up Homebrew
         id: setup-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+        uses: Homebrew/actions/setup-homebrew@main
 
       - name: Install Dart Sass
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install sass/sass/sass
@@ -810,7 +810,7 @@ jobs:
 
       - name: Set up Homebrew
         id: setup-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+        uses: Homebrew/actions/setup-homebrew@main
 
       - name: Install Dart Sass
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install sass/sass/sass
