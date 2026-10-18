@@ -1,0 +1,12 @@
+[build]
+  publish = "public"
+  command = "hugo"
+
+[context.production]
+  command = "hugo"
+
+[context.deploy-preview]
+  command = "hugo -b $DEPLOY_PRIME_URL"
+
+[context.branch-deploy]
+  command = "hugo -b $DEPLOY_PRIME_URL"

@@ -4,3 +4,16 @@ resources/
 secrets
 .vscode
 *.lock
+
+# Visual regression test artifacts
+screenshots/baseline/
+screenshots/current/
+screenshots/diff/
+screenshots/before/
+screenshots/after/
+screenshots/report.html
+screenshots/report.json
+__pycache__/
+
+# Local tool binaries
+.tools/

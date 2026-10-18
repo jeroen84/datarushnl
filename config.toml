@@ -1,25 +1,32 @@
+# Hugo version - sync with .github/workflows/deploy.yml
+# Current version: 0.168.0 (used in CI/CD)
 baseURL = "https://www.datarush.nl"
-languageCode = "en"
-DefaultContentLanguage = "en"
-title = ""
+defaultContentLanguage = "en"
+title = "Datarush"
 theme = "anatole"
 summarylength = 20
 enableEmoji = true
-enableRobotsTXT = true
+enableRobotsTXT = false
 canonifyURLs = true
-
-# Enable Disqus
-#disqusShortname = ""
 
 [params]
 title = "Datarush"
-author = "Datarush"
+author = "Jeroen van de Erve"
+authorEmail = "jeroen@datarush.nl"
 description = "Provide data driven solutions for the financial sector. Make data work for you!"
-profilePicture = "images/avatar.png"
+# profilePicture = "images/avatar.png"
 keywords = ["investment management", "software development", "business intelligence", "data science", "python", "powerbi"]
 #favicon = "favicons/"
 customCss = []
 mainSections = ["post"]
+
+[taxonomies]
+  author = "author"
+  tag = "tags"
+  category = "categories"
+
+# Enable Disqus
+#disqusShortname = ""
 
 ## Math settings
 [params.math]

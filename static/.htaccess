@@ -1,6 +1,13 @@
 Header set Access-Control-Allow-Origin "*"
   <IfModule mod_rewrite.c>    
   RewriteEngine On
+  
+  # HTTPS enforcement
   RewriteCond %{ENV:HTTPS} !on 
   RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+  
+  # Enforce trailing slashes
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_URI} !(.*)/$
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1/ [R=301,L]
   </IfModule>

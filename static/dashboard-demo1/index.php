@@ -1,2 +1,2 @@
 <?php
-    Header("Location: https://datarush-demo1.azurewebsites.net/", true, 301);
+    Header("Location: https://github.com/jeroen84/datarush-demo1", true, 301);
