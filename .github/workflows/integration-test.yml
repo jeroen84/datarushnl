@@ -1,0 +1,831 @@
+name: Integration Tests
+
+on:
+  push:
+    branches:
+      - master
+      - 'feature/**'
+      - 'test/**'
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      run-tests:
+        description: 'Run integration tests'
+        required: true
+        default: 'true'
+
+jobs:
+  build:
+    name: Build Site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Set up Homebrew
+        id: setup-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install Dart Sass
+        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install sass/sass/sass
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3.2.1
+        with:
+          hugo-version: '0.168.0'
+          extended: true
+
+      - name: Build site
+        id: build
+        run: |
+          hugo --minify --cleanDestinationDir
+          echo "BUILD_DIR=$(pwd)/public" >> $GITHUB_ENV
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hugo-build
+          path: public/
+          retention-days: 1
+
+  page-rendering:
+    name: Page Rendering Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: hugo-build
+          path: public/
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 pytest html5validator
+
+      - name: Run page rendering tests
+        run: |
+          python << 'EOF'
+          import os
+          import requests
+          from bs4 import BeautifulSoup
+          
+          # List of all expected pages
+          pages = [
+            '',
+            'post/',
+            'about/',
+            'tags/',
+            'categories/',
+            'author/',
+            'author/jeroen-van-de-erve/',
+            'post/dash/',
+            'post/powerbi/',
+            'post/powerbi-combine/',
+            'post/pensioendashboard_en/',
+          ]
+          
+          public_dir = 'public'
+          base_url = 'http://localhost:8000'
+          
+          # Start a simple HTTP server in background
+          os.system('cd public && python3 -m http.server 8000 &')
+          import time
+          time.sleep(2)  # Give server time to start
+          
+          print("\n=== PAGE RENDERING TESTS ===\n")
+          
+          passed = 0
+          failed = 0
+          
+          for page in pages:
+            url = f"{base_url}/{page}" if page else base_url
+            try:
+              response = requests.get(url, timeout=5)
+              if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                title = soup.title.string if soup.title else 'No title'
+                print(f"✅ {url} - Status: {response.status_code}, Title: {title}")
+                passed += 1
+              else:
+                print(f"❌ {url} - Status: {response.status_code}")
+                failed += 1
+            except Exception as e:
+              print(f"❌ {url} - Error: {str(e)}")
+              failed += 1
+          
+          # Kill the server
+          os.system('pkill -f "python3 -m http.server 8000"')
+          
+          print(f"\n=== RESULTS ===")
+          print(f"Passed: {passed}/{len(pages)}")
+          print(f"Failed: {failed}/{len(pages)}")
+          
+          if failed > 0:
+            exit(1)
+          EOF
+
+      - name: Validate HTML
+        run: |
+          python << 'EOF'
+          from html5validator import Validator
+          import os
+          
+          public_dir = 'public'
+          validator = Validator()
+          
+          print("\n=== HTML VALIDATION ===\n")
+          
+          html_files = []
+          for root, dirs, files in os.walk(public_dir):
+            for file in files:
+              if file.endswith('.html'):
+                html_files.append(os.path.join(root, file))
+          
+          passed = 0
+          failed = 0
+          
+          for html_file in html_files:
+            rel_path = os.path.relpath(html_file, public_dir)
+            try:
+              with open(html_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+              errors = validator.validate_string(content)
+              if errors:
+                print(f"❌ {rel_path} - HTML validation errors found")
+                for error in errors:
+                  print(f"   {error}")
+                failed += 1
+              else:
+                print(f"✅ {rel_path} - Valid HTML")
+                passed += 1
+            except Exception as e:
+              print(f"❌ {rel_path} - Error: {str(e)}")
+              failed += 1
+          
+          print(f"\n=== RESULTS ===")
+          print(f"Valid: {passed}/{len(html_files)}")
+          print(f"Invalid: {failed}/{len(html_files)}")
+          
+          if failed > 0:
+            exit(1)
+          EOF
+
+  link-validation:
+    name: Link Validation Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: hugo-build
+          path: public/
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      - name: Run link validation tests
+        run: |
+          python << 'EOF'
+          import os
+          import requests
+          from bs4 import BeautifulSoup
+          from urllib.parse import urljoin, urlparse
+          
+          public_dir = 'public'
+          base_url = 'http://localhost:8000'
+          
+          # Start server
+          os.system('cd public && python3 -m http.server 8000 &')
+          import time
+          time.sleep(2)
+          
+          print("\n=== LINK VALIDATION TESTS ===\n")
+          
+          def get_all_links(url):
+            """Extract all links from a page"""
+            try:
+              response = requests.get(url, timeout=5)
+              if response.status_code != 200:
+                return []
+              soup = BeautifulSoup(response.text, 'html.parser')
+              links = []
+              for a in soup.find_all('a', href=True):
+                href = a['href']
+                if href.startswith('/') or href.startswith('http'):
+                  links.append(href)
+              return links
+            except Exception:
+              return []
+          
+          def is_internal(url):
+            """Check if URL is internal to the site"""
+            parsed = urlparse(url)
+            return parsed.netloc == '' or parsed.netloc == urlparse(base_url).netloc
+          
+          # Crawl all pages
+          pages_to_check = [base_url]
+          checked_pages = set()
+          all_links = {}
+          
+          while pages_to_check:
+            url = pages_to_check.pop(0)
+            if url in checked_pages:
+              continue
+            checked_pages.add(url)
+            links = get_all_links(url)
+            all_links[url] = links
+            for link in links:
+              if is_internal(link):
+                full_link = urljoin(base_url, link)
+                if full_link not in checked_pages:
+                  pages_to_check.append(full_link)
+          
+          # Test all internal links
+          passed = 0
+          failed = 0
+          broken_links = []
+          
+          for page, links in all_links.items():
+            for link in links:
+              if is_internal(link):
+                full_link = urljoin(base_url, link)
+                try:
+                  response = requests.head(full_link, timeout=5, allow_redirects=True)
+                  if response.status_code in [200, 404]:
+                    if response.status_code == 404:
+                      print(f"❌ Broken link: {link} (from {page})")
+                      broken_links.append((link, page))
+                      failed += 1
+                    else:
+                      passed += 1
+                  else:
+                    print(f"⚠️  Unexpected status: {link} - {response.status_code}")
+                    failed += 1
+                except Exception as e:
+                    print(f"❌ Error accessing: {link} - {str(e)}")
+                    broken_links.append((link, page))
+                    failed += 1
+          
+          # Kill server
+          os.system('pkill -f "python3 -m http.server 8000"')
+          
+          print(f"\n=== RESULTS ===")
+          print(f"Total links checked: {passed + failed}")
+          print(f"Working: {passed}")
+          print(f"Broken: {failed}")
+          
+          if broken_links:
+            print("\n=== BROKEN LINKS ===")
+            for link, page in broken_links:
+              print(f"  {link} (from {page})")
+          
+          if failed > 0:
+            exit(1)
+          EOF
+
+  seo-validation:
+    name: SEO Validation Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: hugo-build
+          path: public/
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      - name: Run SEO validation tests
+        run: |
+          python << 'EOF'
+          import os
+          import requests
+          from bs4 import BeautifulSoup
+          
+          public_dir = 'public'
+          base_url = 'http://localhost:8000'
+          
+          # Start server
+          os.system('cd public && python3 -m http.server 8000 &')
+          import time
+          time.sleep(2)
+          
+          print("\n=== SEO VALIDATION TESTS ===\n")
+          
+          # Pages to check
+          pages = [
+            base_url,
+            f"{base_url}/post/dash/",
+            f"{base_url}/about/",
+          ]
+          
+          passed = 0
+          failed = 0
+          
+          for url in pages:
+            try:
+              response = requests.get(url, timeout=5)
+              soup = BeautifulSoup(response.text, 'html.parser')
+              
+              # Check for canonical tag
+              canonical = soup.find('link', {'rel': 'canonical'})
+              if canonical:
+                print(f"✅ {url} - Has canonical tag: {canonical.get('href')}")
+                passed += 1
+              else:
+                print(f"❌ {url} - Missing canonical tag")
+                failed += 1
+              
+              # Check for meta description
+              meta_desc = soup.find('meta', attrs={'name': 'description'})
+              if meta_desc:
+                print(f"   ✅ Has meta description")
+                passed += 1
+              else:
+                print(f"   ⚠️  Missing meta description")
+                failed += 1
+              
+              # Check for title
+              if soup.title:
+                print(f"   ✅ Has title tag")
+                passed += 1
+              else:
+                print(f"   ❌ Missing title tag")
+                failed += 1
+              
+              # Check for h1
+              h1 = soup.find('h1')
+              if h1:
+                print(f"   ✅ Has h1 heading")
+                passed += 1
+              else:
+                print(f"   ❌ Missing h1 heading")
+                failed += 1
+              
+            except Exception as e:
+              print(f"❌ {url} - Error: {str(e)}")
+              failed += 4  # 4 checks per page
+          
+          # Check sitemap.xml
+          try:
+            sitemap_url = f"{base_url}/sitemap.xml"
+            response = requests.get(sitemap_url, timeout=5)
+            if response.status_code == 200:
+              print(f"✅ {sitemap_url} - Sitemap exists")
+              passed += 1
+            else:
+              print(f"❌ {sitemap_url} - Sitemap not found")
+              failed += 1
+          except Exception as e:
+            print(f"❌ Sitemap check failed: {str(e)}")
+            failed += 1
+          
+          # Check robots.txt
+          try:
+            robots_url = f"{base_url}/robots.txt"
+            response = requests.get(robots_url, timeout=5)
+            if response.status_code == 200:
+              print(f"✅ {robots_url} - robots.txt exists")
+              passed += 1
+            else:
+              print(f"❌ {robots_url} - robots.txt not found")
+              failed += 1
+          except Exception as e:
+            print(f"❌ robots.txt check failed: {str(e)}")
+            failed += 1
+          
+          # Kill server
+          os.system('pkill -f "python3 -m http.server 8000"')
+          
+          print(f"\n=== RESULTS ===")
+          print(f"Passed: {passed}")
+          print(f"Failed: {failed}")
+          
+          if failed > 0:
+            exit(1)
+          EOF
+
+  visual-regression:
+    name: Visual Regression (Before/After Comparison)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v7
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Save current ref for later restore
+        run: echo "CURRENT_REF=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+      - name: Set up Homebrew
+        id: setup-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install Dart Sass
+        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install sass/sass/sass
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3.2.1
+        with:
+          hugo-version: '0.168.0'
+          extended: true
+
+      - name: Build current branch (AFTER)
+        run: hugo --minify --cleanDestinationDir
+
+      - name: Set up Python + Playwright
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 pillow playwright
+          playwright install chromium --with-deps
+
+      - name: Capture AFTER screenshots (current branch)
+        run: |
+          cp test.py /tmp/test_visual.py
+          python test.py --no-build --visual-capture screenshots/after
+
+      - name: Build master (BEFORE)
+        run: |
+          git fetch origin master
+          git checkout origin/master
+          git submodule update --init --recursive
+          hugo --minify --cleanDestinationDir
+
+      - name: Capture BEFORE screenshots (master)
+        run: |
+          python /tmp/test_visual.py --no-build --visual-capture screenshots/before
+
+      - name: Restore current branch
+        run: |
+          git checkout "$CURRENT_REF"
+          git submodule update --init --recursive
+
+      - name: Compare before/after and generate report
+        id: compare
+        run: |
+          python test.py --visual-compare screenshots/before screenshots/after
+
+      - name: Upload BEFORE screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-before
+          path: screenshots/before/
+          retention-days: 7
+
+      - name: Upload AFTER screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-after
+          path: screenshots/after/
+          retention-days: 7
+
+      - name: Upload diff report (images + HTML + JSON)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff-report
+          path: |
+            screenshots/diff/
+            screenshots/report.html
+            screenshots/report.json
+          retention-days: 7
+
+  visual-live-comparison:
+    name: Visual Comparison (Live vs Local)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Set up Homebrew
+        id: setup-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install Dart Sass
+        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install sass/sass/sass
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3.2.1
+        with:
+          hugo-version: '0.168.0'
+          extended: true
+
+      - name: Build site (local = latest commit)
+        run: hugo --minify --cleanDestinationDir
+
+      - name: Set up Python + Playwright
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 pillow playwright
+          playwright install chromium --with-deps
+
+      - name: Capture LIVE screenshots (production = BEFORE)
+        run: |
+          python test.py --visual-live-capture screenshots/before --live-url https://www.datarush.nl
+
+      - name: Capture LOCAL screenshots (latest commit = AFTER, styled via interception)
+        run: |
+          python test.py --no-build --visual-capture screenshots/after
+
+      - name: Compare live vs local and generate report
+        id: compare
+        run: |
+          python test.py --visual-compare screenshots/before screenshots/after
+
+      - name: Upload LIVE screenshots (BEFORE)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-live-before
+          path: screenshots/before/
+          retention-days: 7
+
+      - name: Upload LOCAL screenshots (AFTER)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-local-after
+          path: screenshots/after/
+          retention-days: 7
+
+      - name: Upload diff report (images + HTML + JSON)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-live-diff-report
+          path: |
+            screenshots/diff/
+            screenshots/report.html
+            screenshots/report.json
+          retention-days: 7
+
+  interaction-tests:
+    name: Interaction Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: hugo-build
+          path: public/
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install selenium webdriver-manager pytest
+
+      - name: Run interaction tests
+        run: |
+          python << 'EOF'
+          import os
+          import time
+          from selenium import webdriver
+          from selenium.webdriver.chrome.options import Options
+          from selenium.webdriver.chrome.service import Service
+          from webdriver_manager.chrome import ChromeDriverManager
+          
+          public_dir = 'public'
+          base_url = 'http://localhost:8000'
+          
+          # Start server
+          os.system('cd public && python3 -m http.server 8000 &')
+          time.sleep(2)
+          
+          print("\n=== INTERACTION TESTS ===\n")
+          
+          # Setup Chrome
+          options = Options()
+          options.add_argument('--headless')
+          options.add_argument('--no-sandbox')
+          options.add_argument('--disable-dev-shm-usage')
+          options.add_argument('--disable-gpu')
+          options.add_argument('--window-size=1920,1080')
+          
+          try:
+            driver = webdriver.Chrome(
+              service=Service(ChromeDriverManager().install()),
+              options=options
+            )
+          except Exception as e:
+            print(f"⚠️  Could not run Chrome interaction tests: {str(e)}")
+            print("   Skipping interaction tests (requires Chrome setup)")
+            exit(0)
+          
+          passed = 0
+          failed = 0
+          
+          try:
+            # Test 1: Homepage loads
+            driver.get(base_url)
+            time.sleep(2)
+            if "datarush" in driver.page_source.lower():
+              print("✅ Homepage loads and contains expected content")
+              passed += 1
+            else:
+              print("❌ Homepage does not contain expected content")
+              failed += 1
+            
+            # Test 2: Navigation to About page
+            about_link = driver.find_element('css selector', 'a[href*="about"]')
+            about_link.click()
+            time.sleep(2)
+            if "about" in driver.current_url.lower():
+              print("✅ Navigation to About page works")
+              passed += 1
+            else:
+              print("❌ Navigation to About page failed")
+              failed += 1
+            
+            # Test 3: Navigation to Posts
+            driver.get(base_url)
+            posts_link = driver.find_element('css selector', 'a[href*="post"]')
+            posts_link.click()
+            time.sleep(2)
+            if "post" in driver.current_url.lower():
+              print("✅ Navigation to Posts page works")
+              passed += 1
+            else:
+              print("❌ Navigation to Posts page failed")
+              failed += 1
+            
+            # Test 4: Click on a blog post
+            post_links = driver.find_elements('css selector', 'a[href*="post/"]')
+            if post_links:
+              post_links[0].click()
+              time.sleep(2)
+              if len(driver.find_elements('css selector', 'article')) > 0:
+                print("✅ Blog post page renders correctly")
+                passed += 1
+              else:
+                print("❌ Blog post page does not render correctly")
+                failed += 1
+            else:
+              print("❌ No blog post links found")
+              failed += 1
+            
+            # Test 5: Navigation back
+            driver.back()
+            time.sleep(1)
+            if "post" in driver.current_url.lower():
+              print("✅ Browser back navigation works")
+              passed += 1
+            else:
+              print("❌ Browser back navigation failed")
+              failed += 1
+            
+            # Test 6: Tags page
+            driver.get(f"{base_url}/tags/")
+            time.sleep(2)
+            if "tags" in driver.page_source.lower():
+              print("✅ Tags page loads")
+              passed += 1
+            else:
+              print("❌ Tags page does not load")
+              failed += 1
+            
+            # Test 7: Categories page
+            driver.get(f"{base_url}/categories/")
+            time.sleep(2)
+            if "categories" in driver.page_source.lower():
+              print("✅ Categories page loads")
+              passed += 1
+            else:
+              print("❌ Categories page does not load")
+              failed += 1
+            
+          except Exception as e:
+            print(f"❌ Interaction test error: {str(e)}")
+            failed += 1
+          finally:
+            driver.quit()
+            os.system('pkill -f "python3 -m http.server 8000"')
+          
+          print(f"\n=== RESULTS ===")
+          print(f"Passed: {passed}")
+          print(f"Failed: {failed}")
+          
+          if failed > 0:
+            exit(1)
+          EOF
+
+  regression-tests:
+    name: Regression Tests (RSS, Titles, Author Meta, robots.txt, Front Matter)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: hugo-build
+          path: public/
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      - name: Run regression tests
+        run: |
+          python test.py --no-build --rss --titles --author-meta --robots --frontmatter
+
+  build-warnings:
+    name: Build Warning Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - name: Set up Homebrew
+        id: setup-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install Dart Sass
+        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install sass/sass/sass
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3.2.1
+        with:
+          hugo-version: '0.168.0'
+          extended: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run build warning tests
+        run: |
+          python test.py --build-warnings
