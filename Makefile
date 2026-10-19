@@ -1,7 +1,7 @@
 # Makefile for datarush.nl - Local Development and Testing
 # Dwight (dwight-mta2nxwe) - Local integration test setup
 
-.PHONY: help build serve test test-all test-render test-links test-seo test-rss test-titles test-author-meta test-robots test-frontmatter test-build-warnings test-visual test-visual-live visual-baseline visual-live-capture check-deps clean
+.PHONY: help build serve test test-all test-render test-links test-resources test-seo test-rss test-titles test-author-meta test-robots test-frontmatter test-build-warnings test-visual test-visual-live visual-baseline visual-live-capture check-deps clean
 
 # Default target
 help:
@@ -16,6 +16,7 @@ help:
 	@echo "  test-all          - Alias for test"
 	@echo "  test-render       - Run page rendering tests"
 	@echo "  test-links        - Run link validation tests"
+	@echo "  test-resources    - Run resource validation tests (images, scripts, stylesheets)"
 	@echo "  test-seo          - Run SEO validation tests"
 	@echo "  test-rss          - Run RSS feed validation tests"
 	@echo "  test-titles       - Run page title validation tests"
@@ -53,6 +54,10 @@ test-render:
 # Run link validation tests
 test-links:
 	python test.py --links
+
+# Run resource validation tests (images, scripts, stylesheets)
+test-resources:
+	python test.py --resources
 
 # Run SEO validation tests
 test-seo:
@@ -117,4 +122,4 @@ build-and-test: build test
 PYTHON?=python3
 
 # Phony targets
-.PHONY: build serve test test-all test-render test-links test-seo test-rss test-titles test-author-meta test-robots test-frontmatter test-build-warnings test-visual test-visual-live visual-baseline visual-live-capture check-deps clean install build-and-test
+.PHONY: build serve test test-all test-render test-links test-resources test-seo test-rss test-titles test-author-meta test-robots test-frontmatter test-build-warnings test-visual test-visual-live visual-baseline visual-live-capture check-deps clean install build-and-test

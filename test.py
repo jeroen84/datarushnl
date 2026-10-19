@@ -258,6 +258,172 @@ def test_link_validation():
     return failed == 0
 
 
+def get_all_resources(url):
+    """Extract all resource references (images, scripts, stylesheets, etc.) from a page.
+
+    Returns a list of (resource_url, resource_type, tag_name) tuples.
+    resource_type is one of: image, script, stylesheet, font, media, other.
+    """
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code != 200:
+            return []
+        soup = BeautifulSoup(response.text, 'html.parser')
+        resources = []
+
+        # Images: <img src>, <img srcset>, <source src> (in picture), <input src> (type=image)
+        for img in soup.find_all('img'):
+            src = img.get('src', '')
+            if src and not src.startswith('data:'):
+                resources.append((src, 'image', 'img'))
+            srcset = img.get('srcset', '')
+            if srcset:
+                for part in srcset.split(','):
+                    url_part = part.strip().split()[0] if part.strip() else ''
+                    if url_part and not url_part.startswith('data:'):
+                        resources.append((url_part, 'image', 'img[srcset]'))
+
+        # Scripts: <script src>
+        for script in soup.find_all('script', src=True):
+            resources.append((script['src'], 'script', 'script'))
+
+        # Stylesheets: <link rel="stylesheet" href>
+        for link in soup.find_all('link', href=True):
+            rel = link.get('rel', [])
+            if isinstance(rel, list):
+                rel = ' '.join(rel)
+            if 'stylesheet' in rel.lower():
+                resources.append((link['href'], 'stylesheet', 'link[stylesheet]'))
+            elif 'icon' in rel.lower() or 'apple-touch-icon' in rel.lower():
+                resources.append((link['href'], 'image', f'link[{rel.strip()}]'))
+            elif 'preload' in rel.lower() and link.get('as'):
+                as_type = link.get('as', '')
+                rtype = 'font' if as_type == 'font' else ('image' if as_type == 'image' else 'other')
+                resources.append((link['href'], rtype, f'link[preload:{as_type}]'))
+
+        # Media: <video src>, <audio src>, <source src> (in video/audio)
+        for tag_name in ('video', 'audio'):
+            for media in soup.find_all(tag_name, src=True):
+                resources.append((media['src'], 'media', tag_name))
+
+        # <source src> in <picture>, <video>, <audio>
+        for source in soup.find_all('source', src=True):
+            resources.append((source['src'], 'media', 'source'))
+
+        # Inline styles with url() references
+        for elem in soup.find_all(style=True):
+            style = elem.get('style', '')
+            for match in re.finditer(r'url\(["\']?([^"\')]+)["\']?\)', style):
+                css_url = match.group(1)
+                if css_url and not css_url.startswith('data:'):
+                    resources.append((css_url, 'other', 'style[url()]'))
+
+        # Filter to internal resources only
+        internal = []
+        for res_url, res_type, tag in resources:
+            if res_url.startswith('/') or res_url.startswith('http'):
+                internal.append((res_url, res_type, tag))
+
+        return internal
+    except Exception:
+        return []
+
+
+def test_resource_validation():
+    """Test that all resources (images, scripts, stylesheets) load correctly.
+
+    Catches broken images, missing CSS/JS, and resources that return
+    wrong content types (e.g. an image URL that returns HTML).
+    """
+    print("\n=== RESOURCE VALIDATION TESTS ===\n")
+
+    if not start_server():
+        return False
+
+    # Crawl all pages (same as link validation)
+    pages_to_check = [BASE_URL]
+    checked_pages = set()
+    all_resources = {}
+
+    while pages_to_check:
+        url = pages_to_check.pop(0)
+        if url in checked_pages:
+            continue
+        checked_pages.add(url)
+        resources = get_all_resources(url)
+        all_resources[url] = resources
+        # Also follow internal links to discover more pages
+        for link in get_all_links(url):
+            if is_internal(link):
+                full_link = urljoin(BASE_URL, link)
+                if full_link not in checked_pages:
+                    pages_to_check.append(full_link)
+
+    # Test all internal resources
+    passed = 0
+    failed = 0
+    broken_resources = []
+
+    for page, resources in all_resources.items():
+        for res_url, res_type, tag in resources:
+            if not is_internal(res_url):
+                continue
+            full_url = urljoin(BASE_URL, res_url)
+            try:
+                response = requests.get(full_url, timeout=10, allow_redirects=True, stream=True)
+                status = response.status_code
+                content_type = response.headers.get('Content-Type', '')
+                response.close()
+
+                if status == 200:
+                    # Check content type matches expected resource type
+                    type_ok = True
+                    if res_type == 'image' and not content_type.startswith('image/'):
+                        print(f"❌ Wrong content type: {res_url} ({tag} on {page})")
+                        print(f"   Expected image/*, got: {content_type}")
+                        type_ok = False
+                    elif res_type == 'stylesheet' and 'css' not in content_type and 'text/plain' not in content_type:
+                        print(f"❌ Wrong content type: {res_url} ({tag} on {page})")
+                        print(f"   Expected text/css, got: {content_type}")
+                        type_ok = False
+                    elif res_type == 'script' and 'javascript' not in content_type and 'text/plain' not in content_type:
+                        print(f"❌ Wrong content type: {res_url} ({tag} on {page})")
+                        print(f"   Expected */javascript, got: {content_type}")
+                        type_ok = False
+
+                    if type_ok:
+                        passed += 1
+                    else:
+                        broken_resources.append((res_url, res_type, tag, page, f'wrong type: {content_type}'))
+                        failed += 1
+                elif status == 404:
+                    print(f"❌ Missing resource: {res_url} ({tag} on {page}) - 404")
+                    broken_resources.append((res_url, res_type, tag, page, '404'))
+                    failed += 1
+                else:
+                    print(f"⚠️  Unexpected status: {res_url} ({tag} on {page}) - {status}")
+                    broken_resources.append((res_url, res_type, tag, page, str(status)))
+                    failed += 1
+            except Exception as e:
+                print(f"❌ Error accessing: {res_url} ({tag} on {page}) - {str(e)}")
+                broken_resources.append((res_url, res_type, tag, page, str(e)))
+                failed += 1
+
+    stop_server()
+
+    print(f"\n=== RESULTS ===")
+    print(f"Total resources checked: {passed + failed}")
+    print(f"Working: {passed}")
+    print(f"Broken: {failed}")
+
+    if broken_resources:
+        print("\n=== BROKEN RESOURCES ===")
+        for res_url, res_type, tag, page, reason in broken_resources:
+            print(f"  {res_url} [{res_type}/{tag}] (from {page}) - {reason}")
+
+    return failed == 0
+
+
 def test_seo_validation():
     """Test SEO elements on key pages."""
     print("\n=== SEO VALIDATION TESTS ===\n")
@@ -1603,6 +1769,8 @@ def main():
                         help='Run page rendering tests')
     parser.add_argument('--links', action='store_true',
                         help='Run link validation tests')
+    parser.add_argument('--resources', action='store_true',
+                        help='Run resource validation tests (images, scripts, stylesheets)')
     parser.add_argument('--seo', action='store_true',
                         help='Run SEO validation tests')
     parser.add_argument('--rss', action='store_true',
@@ -1656,7 +1824,7 @@ def main():
         sys.exit(0 if success else 1)
 
     # If no specific tests selected, run all
-    server_tests = [args.build, args.render, args.links, args.seo,
+    server_tests = [args.build, args.render, args.links, args.resources, args.seo,
                     args.rss, args.titles, args.author_meta, args.robots]
     file_tests = [args.frontmatter, args.build_warnings]
     if not any(server_tests + file_tests + [
@@ -1672,8 +1840,8 @@ def main():
 
     # Build site if requested or if any server-based test is requested
     needs_build = (args.build or args.all or args.render or args.links
-                   or args.seo or args.rss or args.titles or args.author_meta
-                   or args.robots or args.build_warnings
+                   or args.resources or args.seo or args.rss or args.titles
+                   or args.author_meta or args.robots or args.build_warnings
                    or args.visual or args.visual_baseline or args.visual_live)
     if needs_build and not args.no_build:
         if not build_site():
@@ -1699,6 +1867,10 @@ def main():
 
     if args.links or args.all:
         if not test_link_validation():
+            all_passed = False
+
+    if args.resources or args.all:
+        if not test_resource_validation():
             all_passed = False
 
     if args.seo or args.all:
