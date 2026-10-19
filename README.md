@@ -80,18 +80,8 @@ A comprehensive SEO audit was performed using Google Search Console data. The fo
 
 2. **Not Indexed Pages (9 pages)**
    - Tag pages are crawled but not indexed by Google
-   - **Analysis**: See `GSC-ANALYSIS.md` for detailed root cause analysis
    - **Fix Applied**: Added `noindex = true` to tag and category taxonomy pages
    - **Files**: `content/tags/_index.md`, `content/categories/_index.md`
-
-### Analysis Documentation
-
-A comprehensive analysis of all SEO issues is available in [`GSC-ANALYSIS.md`](GSC-ANALYSIS.md), including:
-
-- Executive summary of all GSC findings
-- Detailed root cause analysis for not-indexed pages
-- Recommendations for short-term and long-term fixes
-- Tag consolidation strategy
 
 ## Development
 
@@ -228,7 +218,6 @@ The site has a properly configured robots.txt at `static/robots.txt`:
 - [Hugo Documentation](https://gohugo.io/documentation/)
 - [Anatole Theme Documentation](https://github.com/lxndrcom/anatole)
 - [Google Search Console](https://search.google.com/search-console)
-- [GSC Analysis Report](GSC-ANALYSIS.md)
 
 ## Contributing
 

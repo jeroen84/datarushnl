@@ -327,5 +327,4 @@ If the Hugo build fails, ensure you have:
 
 ## Maintainers
 
-- Dwight (dwight-mta2nxwe) - Local test infrastructure
 - See `.github/workflows/integration-test.yml` for full CI test suite

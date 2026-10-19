@@ -1,5 +1,4 @@
 # Makefile for datarush.nl - Local Development and Testing
-# Dwight (dwight-mta2nxwe) - Local integration test setup
 
 .PHONY: help build serve test test-all test-render test-links test-resources test-seo test-rss test-titles test-author-meta test-robots test-frontmatter test-build-warnings test-visual test-visual-live visual-baseline visual-live-capture check-deps clean
 
