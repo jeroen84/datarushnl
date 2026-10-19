@@ -1,6 +1,9 @@
 name: Production Deployment
 
 on:
+  push:
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       confirm:
@@ -12,7 +15,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate confirmation
+      - name: Validate confirmation (manual trigger only)
+        if: github.event_name == 'workflow_dispatch'
         run: |
           if [ "${{ inputs.confirm }}" != "deploy" ]; then
             echo "::error::Deployment not confirmed. Type 'deploy' in the confirm input."
@@ -43,6 +47,6 @@ jobs:
 
       - name: Install lftp
         run: HOMEBREW_NO_AUTO_UPDATE=1 brew install lftp
-  
+
       - name: Upload to ftp server
         run: lftp -e "set sftp:auto-confirm yes;set ssl:verify-certificate yes;mirror -c -R -X *.do-not-remove public HTML;quit" -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}; exit
